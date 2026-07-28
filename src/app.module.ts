@@ -5,9 +5,12 @@ import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
 import { SeedModule } from './seed/seed.module';
 import { FilesModule } from './files/files.module';
+import { AuthModule } from './auth/auth.module';
+import { MessageWsModule } from './message-ws/message-ws.module';
 @Module({
   imports: [ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
+      ssl: process.env.STAGE === 'prod',
       type: 'postgres',
       host: process.env.DB_HOST,
       port: +process.env.DB_PORT!,
@@ -20,7 +23,9 @@ import { FilesModule } from './files/files.module';
     ProductsModule,
     CommonModule,
     SeedModule,
-    FilesModule
-  ],
+    FilesModule,
+    AuthModule,
+    MessageWsModule,
+    ],
 })
 export class AppModule {}

@@ -1,3 +1,11 @@
+/* 
+PRODUCT.SERTVICE.TS
+Este componente esta encargado de manejar la logica de negocio de los productos
+para realizar operaciones CRUD y un mejor control de la base de datos usando 
+control de filtros y paginacion 
+
+*/
+
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -8,6 +16,7 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 
 import { validate as isUUID } from 'uuid';
 import { ProductImage, Product } from './entities';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -28,14 +37,15 @@ export class ProductsService {
 
 
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     
     try {
       const { images = [], ...productDetails } = createProductDto;
 
       const product = this.productRepository.create({
         ...productDetails,
-        images: images.map( image => this.productImageRepository.create({ url: image }) )
+        images: images.map( image => this.productImageRepository.create({ url: image }) ),
+        user,
       });
       
       await this.productRepository.save( product );
@@ -102,7 +112,7 @@ export class ProductsService {
 
 
 
-  async update( id: string, updateProductDto: UpdateProductDto ) {
+  async update( id: string, updateProductDto: UpdateProductDto, user: User ) {
 
     const { images, ...toUpdate } = updateProductDto;
 
@@ -127,6 +137,7 @@ export class ProductsService {
       }
       
       // await this.productRepository.save( product );
+      product.user = user ;
       await queryRunner.manager.save( product );
 
       await queryRunner.commitTransaction();
