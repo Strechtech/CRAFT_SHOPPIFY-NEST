@@ -232,7 +232,7 @@ curl -X DELETE http://localhost:3000/api/products/7b7e0b7c-0d8e-4b7e-9c2e-123456
 
 | Metodo | Ruta | Descripcion |
 | --- | --- | --- |
-| `POST` | `/files/product` | Recibe una imagen en el campo multipart `file` y devuelve `secureUrl`. |
+| `POST` | `/files/product` | Requiere JWT de administrador. Recibe una imagen en el campo multipart `file` y devuelve `secureUrl`. |
 | `GET` | `/files/product/:imageName` | Sirve una imagen almacenada en `static/products`. |
 
 Se aceptan imagenes `jpg`, `jpeg`, `png` y `gif`. Las imagenes se guardan con un nombre UUID. La URL devuelta por la subida puede utilizarse despues en el campo `images` de un producto.
@@ -241,8 +241,11 @@ Para subir una imagen, el nombre del campo multipart debe ser exactamente `file`
 
 ```bash
 curl -X POST http://localhost:3000/api/files/product \
+  -H "Authorization: Bearer TU_TOKEN_DE_ADMIN" \
   -F "file=@./foto-producto.jpg"
 ```
+
+En Swagger, pulsa **Authorize**, introduce el JWT de un usuario administrador y luego selecciona el archivo en el campo `file`.
 
 Respuesta esperada:
 
