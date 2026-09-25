@@ -81,6 +81,30 @@ Las contraseñas deben tener entre 6 y 50 caracteres, con mayúscula, minúscula
 y número. Se almacenan con `bcrypt`; el hash no se devuelve ni se muestra en
 Swagger. Roles disponibles: `admin`, `user` y `super-user`.
 
+### Configuración de `AuthGuard`
+
+El decorador `@Auth()` combina el `AuthGuard()` de Passport con
+`UserRoleGuard`. Por eso, cada módulo que contenga un controlador con
+`@Auth()` debe importar `AuthModule`; este módulo registra y exporta
+`PassportModule`, `JwtModule` y `JwtStrategy`.
+
+Actualmente la dependencia está configurada en:
+
+- `AuthModule`: login, comprobación de sesión y rutas privadas.
+- `ProductsModule`: creación, actualización y eliminación de productos.
+- `FilesModule`: subida de imágenes.
+- `SeedModule`: reservado para futuras protecciones del seed; el endpoint
+  permanece público para permitir el bootstrap inicial.
+
+Si aparece este error al iniciar:
+
+```text
+In order to use "defaultStrategy", please, ensure to import PassportModule
+```
+
+revisa que el módulo del controlador importe `AuthModule` y que no se use
+`AuthGuard()` desde un módulo aislado sin esa dependencia.
+
 ## Seed
 
 `GET /api/seed` elimina usuarios y productos y carga
@@ -209,7 +233,7 @@ http://localhost:3000/api
 src/
 ├── auth/          Registro, login, JWT, guards, roles y User
 ├── products/      CRUD, DTOs y Product/ProductImage
-├── files/         Subida y entrega de imágenes
+├── files/         Subida protegida y entrega pública de imágenes
 ├── message-ws/    Gateway, eventos y DTO de Socket.IO
 ├── seed/          Datos iniciales y bootstrap
 ├── common/        DTOs compartidos y paginación
