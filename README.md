@@ -293,7 +293,7 @@ Ejemplo con JavaScript:
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:3000', {
-  extraHeaders: { authorization: token }
+  auth: { token }
 });
 
 socket.emit('message-from-client', { message: 'Hola equipo' });
