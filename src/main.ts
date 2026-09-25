@@ -14,8 +14,12 @@ async function bootstrap() {
 );
 const config = new DocumentBuilder()
     .setTitle('CRAFT_SHOPPIFY API')
-    .setDescription('Ecomerce system for CRAFT_SHOPPIFY - ENDPOINTS')
+    .setDescription('API de comercio electrónico para CRAFT_SHOPPIFY')
     .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

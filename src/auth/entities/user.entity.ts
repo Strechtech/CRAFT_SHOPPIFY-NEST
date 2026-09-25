@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { Product } from "src/products/entities";
 import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
@@ -25,11 +25,7 @@ export class User {
 
 
   // Validacion para el campo Password del usuario en la BD
-  @ApiProperty({
-    example: '123456',
-    description: 'User password',
-    uniqueItems: true
-  })
+  @ApiHideProperty()
   @Column('text')
   password!: string;  
 

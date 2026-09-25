@@ -6,7 +6,17 @@ import { PaginationDto } from '../common/dtos/pagination.dto';
 import { Auth, GetUser } from '../auth/decorators';
 import { ValidRoles } from '../auth/interfaces';
 import { User } from '../auth/entities/user.entity';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Product } from './entities';
 
 
@@ -18,9 +28,13 @@ export class ProductsController {
   // METODOS HTTP DE CRUD PARA CREAR PRODUCTOS
   @Post()
   @Auth()
-  @ApiResponse({ status: 201, description: 'Producto creado', type: Product })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Crear un producto' })
+  @ApiBody({ type: CreateProductDto })
+  @ApiCreatedResponse({ description: 'Producto creado', type: Product })
   @ApiResponse({ status: 400, description: 'Bad request' })
-    @ApiResponse({ status: 403, description: 'Forbidden. Token related' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
+  @ApiResponse({ status: 403, description: 'El usuario no tiene permisos' })
   create(
     @Body() createProductDto: CreateProductDto,
     @GetUser() user: User,
@@ -29,21 +43,34 @@ export class ProductsController {
   }
 
   @Get()
-  @ApiResponse({ status: 200, description: 'Productos encontrados' })
+  @ApiOperation({ summary: 'Listar productos con paginación' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'offset', required: false, type: Number, example: 0 })
+  @ApiResponse({ status: 200, description: 'Productos encontrados', type: [Product] })
   findAll(@Query() paginationDto: PaginationDto) {
     // console.log(paginationDto);
     return this.productsService.findAll(paginationDto);
   }
 
   @Get(':term')
-  @ApiResponse({ status: 200, description: 'Producto encontrado' })
+  @ApiOperation({ summary: 'Buscar un producto por UUID, título o slug' })
+  @ApiParam({ name: 'term', description: 'UUID, título exacto o slug del producto' })
+  @ApiResponse({ status: 200, description: 'Producto encontrado', type: Product })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
   findOne(@Param('term') term: string) {
     return this.productsService.findOne(term);
   }
 
   @Patch(':id')
   @Auth(ValidRoles.admin)
-  @ApiResponse({ status: 200, description: 'Producto actualizado exitosamente' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Actualizar un producto como administrador' })
+  @ApiParam({ name: 'id', description: 'UUID del producto' })
+  @ApiBody({ type: UpdateProductDto })
+  @ApiResponse({ status: 200, description: 'Producto actualizado exitosamente', type: Product })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
+  @ApiResponse({ status: 403, description: 'Se requiere el rol admin' })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
   update(@Param('id', ParseUUIDPipe) id: string,
    @Body() updateProductDto: UpdateProductDto,
    @GetUser() user: User) {
@@ -52,7 +79,12 @@ export class ProductsController {
 
   @Delete(':id')
   @Auth(ValidRoles.admin)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Eliminar un producto como administrador' })
+  @ApiParam({ name: 'id', description: 'UUID del producto' })
   @ApiResponse({ status: 200, description: 'Producto eliminado exitosamente' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
+  @ApiResponse({ status: 403, description: 'Se requiere el rol admin' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);
   }

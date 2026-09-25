@@ -1,14 +1,18 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Headers, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from './dto';
-import { AuthGuard } from '@nestjs/passport';
 import { User } from './entities/user.entity';
 import { RawHeaders, GetUser, Auth } from './decorators';
 import type { IncomingHttpHeaders } from 'http';
-import { UserRoleGuard } from './guards/user-role/user-role.guard';
-import { RoleProtected } from './decorators/role-protected/role-protected.decorator';
 import { ValidRoles } from './interfaces';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 //  METODOS CRUD PARA EL CONTROL DE USUARIOS (AUTH, REGISTER, LOGIN, ETC)
 @ApiTags('Autenticacion')
@@ -17,21 +21,26 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @ApiResponse({ status: 200, description: 'User created', type: User })
+  @ApiOperation({ summary: 'Registrar un usuario' })
+  @ApiCreatedResponse({ description: 'Usuario creado', type: User })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o email duplicado' })
   create(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
   }
 
   @Post('login')
-  @ApiResponse({ status: 200, description: 'User logged', type: User })
-  @ApiResponse({ status: 401, description: 'User incorrect' })
+  @ApiOperation({ summary: 'Iniciar sesión' })
+  @ApiResponse({ status: 200, description: 'Credenciales válidas y JWT generado' })
+  @ApiResponse({ status: 400, description: 'Usuario o contraseña incorrectos' })
   login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
   }
   @Get('check-status')
   @Auth()
-  @ApiResponse({ status: 200, description: 'Rewiew role user in DB', type: User })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Comprobar sesión activa y renovar token' })
+  @ApiResponse({ status: 200, description: 'Usuario autenticado', type: User })
+  @ApiUnauthorizedResponse({ description: 'Token ausente, inválido o usuario inactivo' })
   checkAuthStatus(@GetUser() user: User) {
     return this.authService.checkAuthStatus(user);
   }
@@ -41,7 +50,10 @@ export class AuthController {
 
 
   @Get('private')
-  @UseGuards(AuthGuard())
+  @Auth()
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Probar una ruta protegida por JWT' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
   testingPrivateRoute(
     @Req() request: Express.Request,
     @GetUser() user: User,
@@ -62,9 +74,11 @@ export class AuthController {
     }
   }
   @Get('private2')
-  @RoleProtected(  ValidRoles.superUser, ValidRoles.admin, ValidRoles.user) 
-  // @SetMetadata('roles', ['admin', 'super-user'])
-  @UseGuards(AuthGuard(), UserRoleGuard)
+  @Auth(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Probar una ruta protegida por roles' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
+  @ApiResponse({ status: 403, description: 'El usuario no tiene un rol permitido' })
   privateRoute2(@GetUser() user: User) {
     return {
       ok: true,
@@ -74,9 +88,11 @@ export class AuthController {
 
 
   @Get('private3')
-  @Auth(  ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
-  // @SetMetadata('roles', ['admin', 'super-user'])
-
+  @Auth(ValidRoles.superUser, ValidRoles.admin, ValidRoles.user)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Probar la protección combinada JWT y roles' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
+  @ApiResponse({ status: 403, description: 'El usuario no tiene un rol permitido' })
   privateRoute3(@GetUser() user: User) {
     return {
       ok: true,

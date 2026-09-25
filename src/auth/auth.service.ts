@@ -36,24 +36,37 @@ export class AuthService {
   // LOGUEAR  USUARIO
   async login(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
-    const user = await this.userRepository.findOne({ where: { email }, select: { email: true, password: true, id: true } });
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: {
+        email: true,
+        password: true,
+        id: true,
+        fullName: true,
+        isActive: true,
+        roles: true,
+      },
+    });
 
     if (!user) {
       throw new BadRequestException('User not found');
     }else if (!bcrypt.compareSync(password, user.password)) {
       throw new BadRequestException('Password incorrect');
     }
-    console.log(user);
+    const { password: _, ...userWithoutPassword } = user;
+
     return {
-      ...user,
+      ...userWithoutPassword,
       token: this.getJwtToken({ email: user.email, id: user.id }),
     };
   }
   
   // CHEQUEAR TOKEN DEL USUARIO
   checkAuthStatus(user: User) {
+    const { password: _, ...userWithoutPassword } = user;
+
     return {
-      ...user,
+      ...userWithoutPassword,
       token: this.getJwtToken({ email: user.email, id: user.id }),
     };
   }

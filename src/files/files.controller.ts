@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Param, UploadedFile, UseInterceptors, BadRequestException, Res } from '@nestjs/common';
+import { Auth } from '../auth/decorators';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -6,7 +7,16 @@ import { diskStorage } from 'multer';
 import { FilesService } from './files.service';
 
 import { fileFilter, fileNamer } from './helpers';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 
 @ApiTags('Archivos- obtener y subir')
@@ -20,6 +30,10 @@ export class FilesController {
 
   
   @Get('product/:imageName')
+  @ApiOperation({ summary: 'Obtener una imagen de producto' })
+  @ApiParam({ name: 'imageName', description: 'Nombre del archivo almacenado' })
+  @ApiResponse({ status: 200, description: 'Archivo de imagen' })
+  @ApiResponse({ status: 400, description: 'La imagen no existe' })
   findProductImage(
     @Res() res: Response,
     @Param('imageName') imageName: string
@@ -33,6 +47,20 @@ export class FilesController {
 
 
   @Post('product')
+  @Auth()
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Subir una imagen de producto' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Imagen subida y URL generada' })
+  @ApiResponse({ status: 400, description: 'El archivo no es una imagen' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido' })
   @UseInterceptors( FileInterceptor('file', {
     fileFilter: fileFilter,
     // limits: { fileSize: 1000 }
