@@ -107,9 +107,6 @@ Todas las rutas comienzan con `/api`.
 | `POST` | `/auth/register` | Publico | Registra un usuario. La contrasena debe tener entre 6 y 50 caracteres, mayusculas, minusculas y un numero o caracter especial. |
 | `POST` | `/auth/login` | Publico | Valida las credenciales y devuelve un JWT. |
 | `GET` | `/auth/check-status` | JWT | Valida el usuario del token y devuelve un token renovado. |
-| `GET` | `/auth/private` | JWT | Ruta de prueba que devuelve informacion del usuario y headers. |
-| `GET` | `/auth/private2` | JWT | Ruta de prueba protegida por roles. |
-| `GET` | `/auth/private3` | JWT | Ruta de prueba protegida por roles mediante el decorador `Auth`. |
 
 Ejemplo de registro:
 
@@ -139,7 +136,7 @@ Ejemplo de respuesta de login:
 }
 ```
 
-`check-status` recibe el usuario desde el JWT y devuelve sus datos junto con un token renovado. Las rutas `private`, `private2` y `private3` son endpoints de prueba para comprobar autenticacion y autorizacion por roles.
+`check-status` recibe el usuario desde el JWT y devuelve sus datos junto con un token renovado.
 
 Los roles disponibles son `user`, `admin` y `super-user`. Los usuarios nuevos reciben `user` por defecto.
 
