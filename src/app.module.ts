@@ -18,7 +18,7 @@ import { MessageWsModule } from './message-ws/message-ws.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
-      synchronize: false
+      synchronize: true
     }),
     ProductsModule,
     CommonModule,
