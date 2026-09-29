@@ -48,13 +48,13 @@ API REST para un e-commerce de productos, construida con NestJS, PostgreSQL y Ty
 
   La API queda disponible en `http://localhost:3000` y utiliza el prefijo global `/api`.
 
-5. Cargar los datos iniciales, una vez iniciada la API:
+5. En desarrollo, cargar los datos iniciales (esto elimina los usuarios y productos existentes):
 
   ```bash
   curl http://localhost:3000/api/seed
   ```
 
-  Tambien se puede abrir `http://localhost:3000/api/seed` con un navegador.
+  Tambien se puede abrir `http://localhost:3000/api/seed` con un navegador. El seed no esta disponible cuando `STAGE=prod`.
 
 ## Variables de entorno
 
@@ -66,7 +66,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 HOST_API=http://localhost:3000/api
-JWT_SECRET_KEY=secretprimary2026
+JWT_SECRET_KEY=tu_clave_Secreta_2026
 ```
 
 `HOST_API` se utiliza para construir las URL publicas de las imagenes. En produccion debe reemplazarse la clave JWT y configurar credenciales seguras. Cuando `STAGE=prod`, TypeORM activa SSL.
@@ -79,7 +79,7 @@ Swagger esta disponible en:
 http://localhost:3000/api
 ```
 
-Desde Swagger se pueden consultar los esquemas y probar los endpoints. Para las rutas protegidas, enviar el JWT recibido en el login como token Bearer.
+Desde Swagger se pueden consultar los esquemas y probar los endpoints. Las rutas protegidas muestran el candado de autorizacion; usa **Authorize** y pega el JWT recibido en el login.
 
 ### Como autenticar peticiones
 
@@ -107,6 +107,7 @@ Todas las rutas comienzan con `/api`.
 | `POST` | `/auth/register` | Publico | Registra un usuario. La contrasena debe tener entre 6 y 50 caracteres, mayusculas, minusculas y un numero o caracter especial. |
 | `POST` | `/auth/login` | Publico | Valida las credenciales y devuelve un JWT. |
 | `GET` | `/auth/check-status` | JWT | Valida el usuario del token y devuelve un token renovado. |
+| `PATCH` | `/auth/users/:id/roles` | `admin` | Asigna roles permitidos a un usuario por UUID. |
 
 Ejemplo de registro:
 
@@ -130,15 +131,25 @@ Ejemplo de respuesta de login:
 
 ```json
 {
-  "id": "uuid-del-usuario",
-  "email": "cliente@example.com",
+  "message": "Usuario ha ingresado con éxito",
   "token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
 
-`check-status` recibe el usuario desde el JWT y devuelve sus datos junto con un token renovado.
+`check-status` recibe el usuario desde el JWT y devuelve sus datos, excepto la contrasena, junto con un token renovado.
 
-Los roles disponibles son `user`, `admin` y `super-user`. Los usuarios nuevos reciben `user` por defecto.
+Los roles disponibles son `user`, `admin` y `super-user`. Los usuarios nuevos reciben `user` por defecto y no pueden asignarse roles al registrarse. En desarrollo, el seed crea un admin de demostracion definido en `src/seed/data/seed-data.ts`; no reutilices esas credenciales fuera del entorno local.
+
+Para delegar acceso, inicia sesion con una cuenta admin y usa el UUID devuelto al registrar al usuario:
+
+```bash
+curl -X PATCH http://localhost:3000/api/auth/users/<user-id>/roles \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin-token>" \
+  -d '{"roles":["user","admin"]}'
+```
+
+El endpoint solo acepta los roles permitidos y evita quitar el rol al ultimo admin. En produccion, el primer admin debe provisionarse mediante un proceso administrativo controlado; el seed destructivo esta deshabilitado.
 
 ### Productos
 
