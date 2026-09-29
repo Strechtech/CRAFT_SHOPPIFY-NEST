@@ -107,9 +107,6 @@ Todas las rutas comienzan con `/api`.
 | `POST` | `/auth/register` | Publico | Registra un usuario. La contrasena debe tener entre 6 y 50 caracteres, mayusculas, minusculas y un numero o caracter especial. |
 | `POST` | `/auth/login` | Publico | Valida las credenciales y devuelve un JWT. |
 | `GET` | `/auth/check-status` | JWT | Valida el usuario del token y devuelve un token renovado. |
-| `GET` | `/auth/private` | JWT | Ruta de prueba que devuelve informacion del usuario y headers. |
-| `GET` | `/auth/private2` | JWT | Ruta de prueba protegida por roles. |
-| `GET` | `/auth/private3` | JWT | Ruta de prueba protegida por roles mediante el decorador `Auth`. |
 
 Ejemplo de registro:
 
@@ -139,7 +136,7 @@ Ejemplo de respuesta de login:
 }
 ```
 
-`check-status` recibe el usuario desde el JWT y devuelve sus datos junto con un token renovado. Las rutas `private`, `private2` y `private3` son endpoints de prueba para comprobar autenticacion y autorizacion por roles.
+`check-status` recibe el usuario desde el JWT y devuelve sus datos junto con un token renovado.
 
 Los roles disponibles son `user`, `admin` y `super-user`. Los usuarios nuevos reciben `user` por defecto.
 
@@ -235,7 +232,7 @@ curl -X DELETE http://localhost:3000/api/products/7b7e0b7c-0d8e-4b7e-9c2e-123456
 
 | Metodo | Ruta | Descripcion |
 | --- | --- | --- |
-| `POST` | `/files/product` | Recibe una imagen en el campo multipart `file` y devuelve `secureUrl`. |
+| `POST` | `/files/product` | Requiere JWT de administrador. Recibe una imagen en el campo multipart `file` y devuelve `secureUrl`. |
 | `GET` | `/files/product/:imageName` | Sirve una imagen almacenada en `static/products`. |
 
 Se aceptan imagenes `jpg`, `jpeg`, `png` y `gif`. Las imagenes se guardan con un nombre UUID. La URL devuelta por la subida puede utilizarse despues en el campo `images` de un producto.
@@ -244,8 +241,11 @@ Para subir una imagen, el nombre del campo multipart debe ser exactamente `file`
 
 ```bash
 curl -X POST http://localhost:3000/api/files/product \
+  -H "Authorization: Bearer TU_TOKEN_DE_ADMIN" \
   -F "file=@./foto-producto.jpg"
 ```
+
+En Swagger, pulsa **Authorize**, introduce el JWT de un usuario administrador y luego selecciona el archivo en el campo `file`.
 
 Respuesta esperada:
 
@@ -293,7 +293,7 @@ Ejemplo con JavaScript:
 import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:3000', {
-  extraHeaders: { authorization: token }
+  auth: { token }
 });
 
 socket.emit('message-from-client', { message: 'Hola equipo' });
