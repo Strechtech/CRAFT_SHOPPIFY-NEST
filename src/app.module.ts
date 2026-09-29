@@ -21,7 +21,7 @@ import { MessageWsModule } from './message-ws/message-ws.module';
       password: process.env.DB_PASSWORD,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.STAGE === 'dev',
-      logging: true
+      logging: false,
     }),
     ProductsModule,
     CommonModule,
