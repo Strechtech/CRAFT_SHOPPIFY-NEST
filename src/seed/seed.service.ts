@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductsService } from './../products/products.service';
 import { initialData } from './data/seed-data';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +17,10 @@ export class SeedService {
 
 
   async runSeed() {
+
+    if (process.env.STAGE === 'prod') {
+      throw new NotFoundException();
+    }
 
     await this.deleteTables();
     const adminUser = await this.insertNewUsers();
